@@ -1,1 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thiết kế và lắp đặt mạch điện điều khiển trong gia đình</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700;800&display=swap">
+<style>
+/* ============ BIẾN MÀU & FONT ============ */
+:root{
+  --lemon:#f7fbb4; --lemon-2:#fdffd9; --ink:#1c2a1f; --green:#14532d; --green-2:#1f7a45;
+  --amber:#d97706; --red:#dc2626; --blue:#2563eb; --card:#ffffff; --line:#c9d46a;
+  --fs-body:clamp(20px,2.1vw,32px); --fs-h2:clamp(30px,3.6vw,56px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Be Vietnam Pro","Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);
+  background:radial-gradient(circle at 15% 10%,var(--lemon-2),var(--lemon) 55%,#eef58f);font-size:var(--fs-body);line-height:1.45}
+svg.i{width:1.1em;height:1.1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ============ THANH MENU TIÊU ĐỀ ============ */
+header{position:fixed;inset:0 0 auto 0;height:68px;background:var(--green);color:#fefce8;display:flex;align-items:center;
+  justify-content:space-between;padding:0 20px;z-index:20;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:clamp(15px,1.5vw,22px);min-width:0}
+.brand .logo{background:#fde047;color:var(--green);width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:none}
+.brand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-wrap{position:relative;margin-left:18px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:10px 16px;font:700 clamp(14px,1.3vw,19px) inherit;font-family:inherit;
+  background:#fefce8;color:var(--green);cursor:pointer;transition:.15s}
+.btn:hover{background:#fde047;transform:translateY(-1px)}
+.btn:focus-visible{outline:3px solid #fde047;outline-offset:2px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+#menuList{position:absolute;top:56px;left:0;width:min(520px,90vw);background:#fff;border-radius:16px;box-shadow:0 12px 32px rgba(0,0,0,.3);
+  padding:8px;display:none;color:var(--ink)}
+#menuList.open{display:block}
+#menuList button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:10px 14px;border-radius:10px;
+  font:600 18px inherit;font-family:inherit;text-align:left;cursor:pointer;color:var(--ink)}
+#menuList button:hover,#menuList button.on{background:var(--lemon)}
+#menuList button .n{background:var(--green);color:#fff;border-radius:8px;min-width:30px;height:30px;display:grid;place-items:center;font-size:15px}
+.controls{display:flex;align-items:center;gap:10px}
+#counter{font-weight:800;min-width:64px;text-align:center}
+.progress{position:fixed;top:68px;left:0;height:5px;background:var(--amber);width:0;transition:width .35s;z-index:19}
+
+/* ============ SLIDE ============ */
+main{position:fixed;inset:73px 0 0 0}
+.slide{position:absolute;inset:0;padding:clamp(16px,2.6vh,40px) clamp(24px,5vw,90px);display:flex;flex-direction:column;justify-content:center;
+  gap:2.2vh;opacity:0;visibility:hidden;transform:translateX(40px);transition:opacity .4s,transform .4s,visibility .4s;overflow-y:auto}
+.slide.active{opacity:1;visibility:visible;transform:none}
+.slide.before{transform:translateX(-40px)}
+h1{font-size:clamp(38px,5.4vw,62px);line-height:1.15;color:var(--green);font-weight:800}
+h2{font-size:var(--fs-h2);color:var(--green);font-weight:800;display:flex;align-items:center;gap:16px;line-height:1.2}
+h2 .ic{background:var(--green);color:#fde047;width:1.4em;height:1.4em;border-radius:14px;display:grid;place-items:center;flex:none}
+h3{font-size:1.15em;color:var(--green);display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(16px,2.2vw,32px);box-shadow:0 6px 0 var(--line)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.4vw,36px);align-items:stretch}
+ul.list{list-style:none;display:grid;gap:12px}
+ul.list li{display:flex;gap:12px;align-items:flex-start}
+ul.list li .i{color:var(--green-2);margin-top:.15em}
+.mark{background:#fde047;border-radius:8px;padding:0 8px;font-weight:700}
+
+/* Slide 1 */
+.cover{align-items:flex-start}
+.cover .tag{display:inline-flex;gap:10px;align-items:center;background:var(--green);color:#fde047;padding:10px 20px;border-radius:999px;font-weight:700}
+.cover .sub{font-size:clamp(20px,2.2vw,34px);max-width:30em}
+.cover .bolt{position:absolute;right:6vw;top:50%;transform:translateY(-50%);width:min(11vw,140px);opacity:.95}
+
+/* Slide 2 */
+.places{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(12px,1.8vw,26px)}
+.place{text-align:center;padding:16px}
+.place svg.art{width:100%;height:auto;max-height:24vh;margin-bottom:10px}
+.place b{display:flex;gap:8px;justify-content:center;align-items:center;color:var(--green)}
+
+/* Slide 4-6 */
+.media{display:grid;place-items:center;min-height:36vh;background:var(--lemon-2);border-radius:16px;overflow:hidden;position:relative}
+.media img{max-width:100%;max-height:52vh;object-fit:contain;display:block}
+.missing::after{content:attr(data-msg);display:block;padding:24px;text-align:center;font-size:18px;font-weight:700;color:var(--red);background:var(--lemon-2);border:3px dashed var(--red);border-radius:14px}
+.thumb.missing .zoom{display:none}
+.thumb{cursor:zoom-in;border:0;padding:0;background:none;width:100%;position:relative;border-radius:16px;overflow:hidden}
+.thumb img{width:100%;max-height:44vh;object-fit:cover;filter:blur(15px) brightness(.95);transition:filter .25s,transform .25s;display:block}
+.thumb:hover img,.thumb:focus-visible img{filter:blur(12px)}
+.thumb .zoom{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(20,83,45,.92);color:#fff;border-radius:999px;
+  padding:12px 22px;font:700 clamp(16px,1.6vw,24px) inherit;font-family:inherit;display:flex;gap:10px;align-items:center;white-space:nowrap}
+.caption{font-size:.8em;margin-top:8px;color:#3f4d3f}
+#lb{position:fixed;inset:0;background:rgba(10,20,12,.94);z-index:50;display:none;place-items:center;padding:20px}
+#lb.open{display:grid}
+#lb img{max-width:96vw;max-height:92vh;object-fit:contain;background:#fff;border-radius:10px}
+#lb .x{position:absolute;top:16px;right:16px}
+
+/* Slide 7 */
+.sim{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);gap:clamp(12px,2vw,28px);align-items:stretch}
+.sim .card{padding:clamp(10px,1.4vw,20px)}
+#circuit{width:100%;height:auto;max-height:56vh;display:block}
+.wire{stroke:#6b7280;stroke-width:6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wire.live{stroke:var(--red);stroke-dasharray:16 10;animation:flow .7s linear infinite}
+.wire.liveN{stroke:var(--blue);stroke-dasharray:16 10;animation:flow .7s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-26}}
+.lever{stroke:#111827;stroke-width:9;stroke-linecap:round}
+.lever.live{stroke:var(--red)}
+.sw{cursor:pointer}
+.sw:hover .body{fill:#fef9c3}
+.sw:focus-visible .body{stroke:var(--amber);stroke-width:5}
+.body{fill:#fff;stroke:#475569;stroke-width:3}
+.term{fill:#111827}
+.term.live{fill:var(--red)}
+.lbl{font:700 20px "Be Vietnam Pro",Arial,sans-serif;fill:#1f2937}
+.lbl.s{font-size:16px;font-weight:600;fill:#475569}
+.glow{fill:#fde047;opacity:0;transition:opacity .3s}
+.bulb{fill:#e5e7eb;stroke:#374151;stroke-width:4;transition:fill .3s}
+#lamp.on .glow{opacity:.75}
+#lamp.on .bulb{fill:#facc15}
+.panel{display:flex;flex-direction:column;gap:12px}
+.tg{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--lemon-2);border:3px solid var(--line);border-radius:14px;padding:10px 14px;font-weight:700}
+.tg button{border:0;border-radius:10px;padding:8px 14px;font:700 inherit;font-size:.85em;font-family:inherit;cursor:pointer;background:var(--green);color:#fff;display:flex;gap:8px;align-items:center}
+.tg button:hover{background:var(--green-2)}
+.status{border-radius:16px;padding:12px 16px;font-weight:800;display:flex;align-items:center;gap:12px;background:#e5e7eb;transition:.3s}
+.status.on{background:#fde047;color:#713f12}
+table{width:100%;border-collapse:collapse;font-size:.78em;text-align:center}
+th,td{border:2px solid var(--line);padding:6px}
+th{background:var(--lemon)}
+tr.cur td{background:#fde047;font-weight:800}
+#why{font-size:.78em}
+
+/* ============ QR TRUY CẬP BÀI HỌC ============ */
+#qrBtn{position:fixed;right:12px;bottom:12px;z-index:15;width:78px;border:3px solid var(--green);border-radius:14px;background:#fff;padding:6px 6px 2px;
+  cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);font:700 12px inherit;font-family:inherit;color:var(--green);text-align:center;transition:.15s}
+#qrBtn:hover{transform:scale(1.06)}
+#qrBtn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#qrBtn svg,#qrBig svg{display:block;width:100%;height:auto}
+#qr{position:fixed;inset:0;background:rgba(10,20,12,.92);z-index:60;display:none;place-items:center;padding:20px}
+#qr.open{display:grid}
+#qrBox{background:#fff;border-radius:24px;padding:clamp(20px,3vh,36px);text-align:center;max-width:94vw}
+#qrBig{width:min(70vh,70vw,560px);margin:0 auto;padding:16px;background:#fff}
+#qrBox p{margin-top:10px;font-weight:700;color:var(--green);font-size:clamp(18px,2vw,28px)}
+#qrBox small{display:block;font-size:clamp(14px,1.4vw,20px);color:#3f4d3f;word-break:break-all}
+#qr .x{position:absolute;top:16px;right:16px}
+
+@media (max-width:900px){
+  .grid2,.sim{grid-template-columns:1fr}.places{grid-template-columns:1fr 1fr}.cover .bolt{display:none}
+  .brand span{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ BỘ ICON (SVG sprite) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="i-switch" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="3"/><path d="M12 6.5v5"/><rect x="9" y="11.5" width="6" height="5" rx="1"/></symbol>
+  <symbol id="i-circuit" viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+  <symbol id="i-stairs" viewBox="0 0 24 24"><path d="M3 21h5v-5h5v-5h5V6h3"/></symbol>
+  <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 22v-6M12 3a5 5 0 0 0-4 8 4 4 0 0 0 4 5 4 4 0 0 0 4-5 5 5 0 0 0-4-8z"/></symbol>
+  <symbol id="i-corridor" viewBox="0 0 24 24"><path d="M4 21V8l4-4h8l4 4v13M8 21V10h8v11"/></symbol>
+  <symbol id="i-tunnel" viewBox="0 0 24 24"><path d="M3 21V12a9 9 0 0 1 18 0v9M8 21v-9a4 4 0 0 1 8 0v9"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></symbol>
+  <symbol id="i-zoom" viewBox="0 0 24 24"><path d="M21 21l-4.3-4.3M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14zM11 8v6M8 11h6"/></symbol>
+  <symbol id="i-flip" viewBox="0 0 24 24"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/></symbol>
+</svg>
+
+<!-- ============ MENU TIÊU ĐỀ + NÚT TRƯỚC/SAU ============ -->
+<header>
+  <div class="brand">
+    <div class="logo"><svg class="i" style="width:26px;height:26px"><use href="#i-bolt"/></svg></div>
+    <span>Mạch điện điều khiển trong gia đình</span>
+    <div class="menu-wrap">
+      <button class="btn" id="menuBtn" aria-haspopup="true"><svg class="i"><use href="#i-menu"/></svg>Menu</button>
+      <div id="menuList" role="menu"></div>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" id="fsBtn" title="Toàn màn hình (phím F)"><svg class="i"><use href="#i-full"/></svg></button>
+    <button class="btn" id="prev" title="Slide trước (←)"><svg class="i"><use href="#i-prev"/></svg>Trước</button>
+    <span id="counter">1 / 7</span>
+    <button class="btn" id="next" title="Slide sau (→)">Sau<svg class="i"><use href="#i-next"/></svg></button>
+  </div>
+</header>
+<div class="progress" id="bar"></div>
+
+<main>
+
+<!-- ============ SLIDE 1 ============ -->
+<section class="slide cover" data-title="Tiêu đề bài" data-icon="bolt">
+  <span class="tag"><svg class="i"><use href="#i-home"/></svg>Công nghệ 12 - Bài 10</span>
+  <h1>THIẾT KẾ VÀ LẮP ĐẶT MẠCH ĐIỆN <br> ĐIỀU KHIỂN TRONG GIA ĐÌNH</h1>
+  <p class="sub"><b>Mục tiêu:</b> Thiết kế và lắp được một mạch điện điều khiển đơn giản trong gia đình.</p>
+  <svg class="bolt" viewBox="0 0 200 200" aria-hidden="true">
+    <circle cx="100" cy="100" r="92" fill="#fde047" stroke="#14532d" stroke-width="6"/>
+    <path d="M115 25L52 112h42l-9 63 63-87h-42z" fill="#14532d"/>
+  </svg>
+</section>
+
+<!-- ============ SLIDE 2 ============ -->
+<section class="slide" data-title="Giới thiệu" data-icon="info">
+  <h2><span class="ic"><svg class="i"><use href="#i-info"/></svg></span>I. Giới thiệu</h2>
+  <p>Mạch điện điều khiển từ hai vị trí (hay còn gọi là mạch điện cầu thang), mạch này không chỉ dùng cho <b>cầu thang</b>, mà còn rất hữu ích ở <b>sân vườn, hành lang, đường hầm...</b>…</p>
+  <div class="places">
+    <div class="card place">
+      <svg class="art" viewBox="0 0 200 130"><rect width="200" height="130" rx="12" fill="#e0f2fe"/><path d="M20 115h45V90h35V65h35V40h45v75z" fill="#cbd5e1" stroke="#475569" stroke-width="3"/><circle cx="168" cy="22" r="10" fill="#facc15"/></svg>
+      <b><svg class="i"><use href="#i-stairs"/></svg>Cầu thang</b>
+    </div>
+    <div class="card place">
+      <svg class="art" viewBox="0 0 200 130"><rect width="200" height="130" rx="12" fill="#dcfce7"/><rect y="100" width="200" height="30" fill="#86efac"/><rect x="40" y="55" width="12" height="50" fill="#92400e"/><circle cx="46" cy="45" r="28" fill="#22c55e"/><rect x="140" y="65" width="10" height="40" fill="#92400e"/><circle cx="145" cy="55" r="22" fill="#16a34a"/><rect x="95" y="30" width="4" height="70" fill="#475569"/><circle cx="97" cy="28" r="9" fill="#facc15"/></svg>
+      <b><svg class="i"><use href="#i-tree"/></svg>Sân vườn</b>
+    </div>
+    <div class="card place">
+      <svg class="art" viewBox="0 0 200 130"><rect width="200" height="130" rx="12" fill="#f1f5f9"/><path d="M0 0l70 35v60L0 130zM200 0l-70 35v60l70 35z" fill="#cbd5e1"/><rect x="70" y="35" width="60" height="60" fill="#e2e8f0" stroke="#94a3b8" stroke-width="3"/><circle cx="100" cy="14" r="8" fill="#facc15"/><path d="M30 130L70 95h60l40 35z" fill="#94a3b8"/></svg>
+      <b><svg class="i"><use href="#i-corridor"/></svg>Hành lang</b>
+    </div>
+    <div class="card place">
+      <svg class="art" viewBox="0 0 200 130"><rect width="200" height="130" rx="12" fill="#e2e8f0"/><path d="M20 130V70a80 70 0 0 1 160 0v60z" fill="#64748b"/><path d="M55 130V75a45 42 0 0 1 90 0v55z" fill="#1e293b"/><circle cx="100" cy="42" r="8" fill="#facc15"/><circle cx="100" cy="42" r="20" fill="#facc15" opacity=".3"/></svg>
+      <b><svg class="i"><use href="#i-tunnel"/></svg>Đường hầm</b>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 3 ============ -->
+<section class="slide" data-title="Nhiệm vụ, yêu cầu" data-icon="target">
+  <h2><span class="ic"><svg class="i"><use href="#i-target"/></svg></span>II. Nhiệm vụ, yêu cầu</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><svg class="i"><use href="#i-wrench"/></svg>Nhiệm vụ</h3>
+      <p>Thiết kế, lắp đặt mạch điện điều khiển <span class="mark">bật tắt bóng đèn ngoài sân</span>.</p>
+    </div>
+    <div class="card">
+      <h3><svg class="i"><use href="#i-check"/></svg>Yêu cầu</h3>
+      <p>Bóng đèn ngoài sân được bật tắt ở <span class="mark">2 vị trí khác nhau</span>: <b>trong nhà</b> và <b>ngoài sân</b>.</p>
+    </div>
+  </div>
+  <div class="card" style="display:flex;justify-content:space-around;align-items:center;gap:16px;flex-wrap:wrap;font-weight:700">
+    <span style="display:flex;gap:10px;align-items:center"><svg class="i" style="width:1.6em;height:1.6em"><use href="#i-switch"/></svg>Công tắc trong nhà</span>
+    <span style="display:flex;gap:10px;align-items:center;color:var(--amber)"><svg class="i" style="width:1.6em;height:1.6em"><use href="#i-flip"/></svg>cùng điều khiển</span>
+    <span style="display:flex;gap:10px;align-items:center"><svg class="i" style="width:1.6em;height:1.6em"><use href="#i-bulb"/></svg>Đèn ngoài sân</span>
+    <span style="display:flex;gap:10px;align-items:center;color:var(--amber)"><svg class="i" style="width:1.6em;height:1.6em"><use href="#i-flip"/></svg>cùng điều khiển</span>
+    <span style="display:flex;gap:10px;align-items:center"><svg class="i" style="width:1.6em;height:1.6em"><use href="#i-switch"/></svg>Công tắc ngoài sân</span>
+  </div>
+</section>
+
+<!-- ============ SLIDE 4 ============ -->
+<section class="slide" data-title="Công tắc 3 cực" data-icon="switch">
+  <h2><span class="ic"><svg class="i"><use href="#i-switch"/></svg></span>Giới thiệu về công tắc 3 cực</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><svg class="i"><use href="#i-zoom"/></svg>Ảnh công tắc 3 cực</h3>
+      <div class="media"><img src="image/anh4.png" alt="Ảnh công tắc 3 cực" onerror="imgFallback(this)"></div>
+    </div>
+    <div class="card">
+      <h3><svg class="i"><use href="#i-info"/></svg>Giới thiệu chức năng</h3>
+      <ul class="list">
+        <li><svg class="i"><use href="#i-check"/></svg><span>Có <b>3 cực</b>: 1 cực chung (COM) và 2 cực hành trình.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Mỗi lần gạt, cực chung nối sang <b>một trong hai</b> cực hành trình.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Dùng <b>hai công tắc</b> để điều khiển <b>một đèn</b> từ hai nơi.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Lắp ở cầu thang, hành lang, sân vườn, đầu giường…</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 5 ============ -->
+<section class="slide" data-title="Sơ đồ nguyên lý" data-icon="circuit">
+  <h2><span class="ic"><svg class="i"><use href="#i-circuit"/></svg></span>Gợi ý giới thiệu sơ đồ nguyên lý để học sinh vẽ</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><svg class="i"><use href="#i-info"/></svg>Giới thiệu về sơ đồ nguyên lý</h3>
+      <ul class="list">
+        <li><svg class="i"><use href="#i-check"/></svg><span>Sơ đồ nguyên lý là sơ đồ thể hiện <b>liên kết giữa các phần tử điện</b>: nguồn, công tắc, đèn.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Dây pha đi vào <b>cực chung</b> của công tắc 1.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Hai <b>cực hành trình</b> của công tắc 1 nối với hai cực hành trình của công tắc 2.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Cực chung của công tắc 2 nối với <b>bóng đèn</b>, rồi về dây trung tính.</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg class="i"><use href="#i-zoom"/></svg>Sơ đồ nguyên lý</h3>
+      <button class="thumb" data-full="anh5" aria-label="Xem sơ đồ nguyên lý toàn màn hình">
+        <img src="image/anh5.png" alt="Sơ đồ nguyên lý (ảnh mờ)" onerror="imgFallback(this)">
+        <span class="zoom"><svg class="i"><use href="#i-zoom"/></svg>Bấm để xem toàn màn hình</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 6 ============ -->
+<section class="slide" data-title="Sơ đồ lắp đặt" data-icon="wrench">
+  <h2><span class="ic"><svg class="i"><use href="#i-wrench"/></svg></span>Gợi ý sơ đồ lắp đặt để học sinh vẽ</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><svg class="i"><use href="#i-info"/></svg>Giới thiệu về sơ đồ lắp đặt</h3>
+      <ul class="list">
+        <li><svg class="i"><use href="#i-check"/></svg><span>Sơ đồ lắp đặt là sơ đồ thể hiện <b>vị trí thực tế</b> của nguồn, công tắc, đèn.</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Qua đó <b>tính toán được lượng vật tư</b> cần cho hệ thống (dây dẫn, hộp, công tắc…).</span></li>
+        <li><svg class="i"><use href="#i-check"/></svg><span>Nối đúng 2 dây hành trình giữa hai công tắc.</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><svg class="i"><use href="#i-zoom"/></svg>Sơ đồ lắp đặt</h3>
+      <button class="thumb" data-full="anh6" aria-label="Xem sơ đồ lắp đặt toàn màn hình">
+        <img src="image/anh6.png" alt="Sơ đồ lắp đặt (ảnh mờ)" onerror="imgFallback(this)">
+        <span class="zoom"><svg class="i"><use href="#i-zoom"/></svg>Bấm để xem toàn màn hình</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 7: MẠCH ĐIỆN TƯƠNG TÁC ============ -->
+<section class="slide" data-title="Mạch điện cầu thang (mô phỏng)" data-icon="bulb">
+  <h2><span class="ic"><svg class="i"><use href="#i-bulb"/></svg></span>Mạch điện cầu thang: bấm công tắc để xem đèn sáng hay tắt</h2>
+  <div class="sim">
+    <div class="card">
+      <svg id="circuit" viewBox="0 0 920 430" role="img" aria-label="Sơ đồ mạch điện cầu thang hai công tắc 3 cực">
+        <!-- dây -->
+        <path id="w_src" class="wire" d="M90 210H220"/>
+        <path id="w_t1" class="wire" d="M310 150H590"/>
+        <path id="w_t2" class="wire" d="M310 270H590"/>
+        <path id="w_c2" class="wire" d="M680 210H812"/>
+        <path id="w_n" class="wire" d="M840 238V370H90"/>
+        <!-- nguồn -->
+        <rect x="30" y="150" width="60" height="240" rx="10" fill="#fff" stroke="#475569" stroke-width="3"/>
+        <text class="lbl s" transform="translate(66 270) rotate(-90)" text-anchor="middle">NGUỒN 220V</text>
+        <text class="lbl s" x="96" y="196">L (pha)</text>
+        <text class="lbl s" x="96" y="358">N (trung tính)</text>
+        <!-- công tắc S1 -->
+        <g class="sw" id="sw1" tabindex="0" role="button" aria-label="Gạt công tắc S1">
+          <rect class="body" x="190" y="110" width="150" height="200" rx="16"/>
+          <g transform="translate(220 210)"><line id="lv1" class="lever" x1="0" y1="0" x2="108" y2="0"/></g>
+          <circle class="term" id="t_c1" cx="220" cy="210" r="9"/>
+          <circle class="term" id="t_11" cx="310" cy="150" r="9"/>
+          <circle class="term" id="t_12" cx="310" cy="270" r="9"/>
+          <text class="lbl s" x="208" y="236">COM</text><text class="lbl s" x="286" y="134">1</text><text class="lbl s" x="286" y="302">2</text>
+        </g>
+        <text class="lbl" x="265" y="96" text-anchor="middle">Công tắc S1</text>
+        <!-- công tắc S2 -->
+        <g class="sw" id="sw2" tabindex="0" role="button" aria-label="Gạt công tắc S2">
+          <rect class="body" x="560" y="110" width="150" height="200" rx="16"/>
+          <g transform="translate(680 210)"><line id="lv2" class="lever" x1="0" y1="0" x2="-108" y2="0"/></g>
+          <circle class="term" id="t_c2" cx="680" cy="210" r="9"/>
+          <circle class="term" id="t_21" cx="590" cy="150" r="9"/>
+          <circle class="term" id="t_22" cx="590" cy="270" r="9"/>
+          <text class="lbl s" x="650" y="236">COM</text><text class="lbl s" x="598" y="134">1</text><text class="lbl s" x="598" y="302">2</text>
+        </g>
+        <text class="lbl" x="635" y="96" text-anchor="middle">Công tắc S2</text>
+        <!-- đèn -->
+        <g id="lamp">
+          <circle class="glow" cx="840" cy="210" r="62"/>
+          <circle class="bulb" cx="840" cy="210" r="28"/>
+          <path d="M820 190l40 40M860 190l-40 40" stroke="#374151" stroke-width="4"/>
+          <text class="lbl" x="840" y="296" text-anchor="middle">Đèn</text>
+        </g>
+        <text class="lbl s" x="440" y="395" text-anchor="middle">Dây trung tính</text>
+        <text class="lbl s" x="450" y="140" text-anchor="middle">dây hành trình 1</text>
+        <text class="lbl s" x="450" y="298" text-anchor="middle">dây hành trình 2</text>
+      </svg>
+    </div>
+
+    <div class="panel">
+      <div class="tg"><span>Công tắc S1: vị trí <b id="p1">1</b></span><button id="b1"><svg class="i"><use href="#i-flip"/></svg>Gạt</button></div>
+      <div class="tg"><span>Công tắc S2: vị trí <b id="p2">1</b></span><button id="b2"><svg class="i"><use href="#i-flip"/></svg>Gạt</button></div>
+      <div class="status" id="status"><svg class="i" style="width:1.4em;height:1.4em"><use href="#i-bulb"/></svg><span id="stText">Đèn TẮT</span></div>
+      <table>
+        <tr><th>S1</th><th>S2</th><th>Đèn</th></tr>
+        <tr data-k="11"><td>1</td><td>1</td><td>Sáng</td></tr>
+        <tr data-k="12"><td>1</td><td>2</td><td>Tắt</td></tr>
+        <tr data-k="21"><td>2</td><td>1</td><td>Tắt</td></tr>
+        <tr data-k="22"><td>2</td><td>2</td><td>Sáng</td></tr>
+      </table>
+      <p id="why"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- QR nhỏ góc phải dưới: bấm để phóng to -->
+<button id="qrBtn" aria-label="Phóng to mã QR vào bài học"><span id="qrSmall"><svg shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><path stroke="#000" d="M0 0.5h7m1 0h2m3 0h1m3 0h3m2 0h7m-29 1h1m5 0h1m1 0h3m1 0h1m3 0h1m1 0h1m3 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m2 0h1m2 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m4 0h7m1 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m4 0h3m3 0h3m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h2m1 0h2m1 0h1m2 0h2m-19 1h1m1 0h2m1 0h3m1 0h4m1 0h1m1 0h5m1 0h1m2 0h1m1 0h2m-26 1h2m2 0h1m4 0h2m2 0h9m3 0h1m-29 1h4m1 0h4m1 0h4m3 0h1m2 0h3m1 0h1m1 0h2m-28 1h3m1 0h1m3 0h1m4 0h4m1 0h3m2 0h2m3 0h1m-28 1h4m1 0h2m1 0h1m3 0h3m1 0h1m7 0h2m-27 1h1m1 0h1m1 0h1m3 0h2m2 0h1m1 0h6m2 0h1m3 0h3m-29 1h2m2 0h1m1 0h3m1 0h1m1 0h1m5 0h5m3 0h3m-29 1h2m5 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m4 0h1m-28 1h4m1 0h2m4 0h1m1 0h3m2 0h1m1 0h2m1 0h3m1 0h1m-27 1h1m2 0h2m2 0h3m1 0h1m2 0h3m2 0h2m1 0h1m1 0h3m-28 1h1m3 0h1m1 0h2m1 0h1m3 0h4m1 0h1m2 0h1m1 0h2m1 0h1m-25 1h3m2 0h1m2 0h1m4 0h3m1 0h1m6 0h1m-26 1h2m2 0h2m1 0h1m1 0h4m1 0h4m1 0h7m-19 1h1m3 0h1m3 0h1m3 0h1m3 0h5m-29 1h7m1 0h1m1 0h2m2 0h1m1 0h5m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h3m2 0h1m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m2 0h1m7 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h7m1 0h1m1 0h1m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h4m2 0h2m2 0h1m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m7 0h1m1 0h1m1 0h1m1 0h3m1 0h2m1 0h1m-28 1h7m1 0h3m1 0h2m1 0h1m3 0h2m3 0h1m2 0h1"/></svg>
+</span>Quét QR</button>
+<div id="qr" role="dialog" aria-modal="true">
+  <button class="btn x" id="qrClose"><svg class="i"><use href="#i-close"/></svg>Đóng (Esc)</button>
+  <div id="qrBox">
+    <div id="qrBig"><svg shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29"><path stroke="#000" d="M0 0.5h7m1 0h2m3 0h1m3 0h3m2 0h7m-29 1h1m5 0h1m1 0h3m1 0h1m3 0h1m1 0h1m3 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h4m2 0h1m2 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m4 0h7m1 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m4 0h3m3 0h3m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h2m1 0h2m1 0h1m2 0h2m-19 1h1m1 0h2m1 0h3m1 0h4m1 0h1m1 0h5m1 0h1m2 0h1m1 0h2m-26 1h2m2 0h1m4 0h2m2 0h9m3 0h1m-29 1h4m1 0h4m1 0h4m3 0h1m2 0h3m1 0h1m1 0h2m-28 1h3m1 0h1m3 0h1m4 0h4m1 0h3m2 0h2m3 0h1m-28 1h4m1 0h2m1 0h1m3 0h3m1 0h1m7 0h2m-27 1h1m1 0h1m1 0h1m3 0h2m2 0h1m1 0h6m2 0h1m3 0h3m-29 1h2m2 0h1m1 0h3m1 0h1m1 0h1m5 0h5m3 0h3m-29 1h2m5 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m4 0h1m-28 1h4m1 0h2m4 0h1m1 0h3m2 0h1m1 0h2m1 0h3m1 0h1m-27 1h1m2 0h2m2 0h3m1 0h1m2 0h3m2 0h2m1 0h1m1 0h3m-28 1h1m3 0h1m1 0h2m1 0h1m3 0h4m1 0h1m2 0h1m1 0h2m1 0h1m-25 1h3m2 0h1m2 0h1m4 0h3m1 0h1m6 0h1m-26 1h2m2 0h2m1 0h1m1 0h4m1 0h4m1 0h7m-19 1h1m3 0h1m3 0h1m3 0h1m3 0h5m-29 1h7m1 0h1m1 0h2m2 0h1m1 0h5m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h3m2 0h1m2 0h1m1 0h1m1 0h1m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m2 0h1m7 0h1m2 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h7m1 0h1m1 0h1m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h4m2 0h2m2 0h1m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m7 0h1m1 0h1m1 0h1m1 0h3m1 0h2m1 0h1m-28 1h7m1 0h3m1 0h2m1 0h1m3 0h2m3 0h1m2 0h1"/></svg>
+</div>
+    <p>Dùng điện thoại quét mã để vào bài học</p>
+    <small>https://lehongphongdtu.github.io/bai-hoc/</small>
+  </div>
+</div>
+
+<!-- Xem ảnh toàn màn hình -->
+<div id="lb" role="dialog" aria-modal="true">
+  <button class="btn x" id="lbClose"><svg class="i"><use href="#i-close"/></svg>Đóng (Esc)</button>
+  <img id="lbImg" alt="Ảnh toàn màn hình">
+</div>
+
+<script>
+/* ============ ẢNH: tự thử đuôi png, jpg, jpeg, webp ============ */
+function imgFallback(img){
+  var exts=['png','jpg','jpeg','webp','PNG','JPG'];
+  var base=img.getAttribute('src').replace(/\.[^.\/]+$/,'');
+  var n=+(img.dataset.n||0);
+  if(n<exts.length){ img.dataset.n=n+1; img.src=base+'.'+exts[n]; }
+  else { var box=img.closest('.media')||img.parentNode; box.dataset.msg='Chưa thấy ảnh. Hãy đặt file '+base+'.png vào thư mục image (cùng cấp với index.html).'; box.classList.add('missing'); img.style.display='none'; }
+}
+
+/* ============ ĐIỀU HƯỚNG SLIDE ============ */
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0, menuList=document.getElementById('menuList');
+slides.forEach(function(s,i){
+  var b=document.createElement('button');
+  b.innerHTML='<span class="n">'+(i+1)+'</span><svg class="i"><use href="#i-'+s.dataset.icon+'"/></svg>'+s.dataset.title;
+  b.onclick=function(){go(i);menuList.classList.remove('open')};
+  menuList.appendChild(b);
+});
+function go(n){
+  cur=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach(function(s,i){
+    s.classList.toggle('active',i===cur);
+    s.classList.toggle('before',i<cur);
+  });
+  document.getElementById('counter').textContent=(cur+1)+' / '+slides.length;
+  document.getElementById('bar').style.width=((cur+1)/slides.length*100)+'%';
+  document.getElementById('prev').disabled=cur===0;
+  document.getElementById('next').disabled=cur===slides.length-1;
+  [].forEach.call(menuList.children,function(b,i){b.classList.toggle('on',i===cur)});
+  history.replaceState(null,'','#'+(cur+1));
+}
+document.getElementById('prev').onclick=function(){go(cur-1)};
+document.getElementById('next').onclick=function(){go(cur+1)};
+document.getElementById('menuBtn').onclick=function(e){e.stopPropagation();menuList.classList.toggle('open')};
+document.addEventListener('click',function(){menuList.classList.remove('open')});
+function toggleFS(){
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+document.getElementById('fsBtn').onclick=toggleFS;
+
+/* ============ XEM ẢNH TOÀN MÀN HÌNH ============ */
+var lb=document.getElementById('lb'), lbImg=document.getElementById('lbImg');
+[].forEach.call(document.querySelectorAll('.thumb'),function(t){
+  t.onclick=function(){ lbImg.src=t.querySelector('img').src; lb.classList.add('open'); };
+});
+function closeLb(){lb.classList.remove('open')}
+/* QR */
+var qrBox=document.getElementById('qr');
+document.getElementById('qrBtn').onclick=function(){qrBox.classList.add('open')};
+document.getElementById('qrClose').onclick=function(){qrBox.classList.remove('open')};
+qrBox.onclick=function(e){if(e.target===qrBox)qrBox.classList.remove('open')};
+document.getElementById('lbClose').onclick=closeLb;
+lb.onclick=function(e){if(e.target===lb)closeLb()};
+
+/* ============ PHÍM TẮT ============ */
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){closeLb();qrBox.classList.remove('open');menuList.classList.remove('open');return}
+  if(lb.classList.contains('open')||qrBox.classList.contains('open'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);
+  else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+  else if(e.key==='Home')go(0);
+  else if(e.key==='End')go(slides.length-1);
+  else if(e.key==='f'||e.key==='F')toggleFS();
+  else if(cur===6&&e.key==='1')flip(1);
+  else if(cur===6&&e.key==='2')flip(2);
+});
+
+/* ============ SLIDE 7: MẠCH ĐIỆN CẦU THANG ============ */
+var s1=1,s2=1,ANG=33.7;
+function $(id){return document.getElementById(id)}
+function setLive(id,on,cls){var el=$(id);el.classList.remove('live','liveN');if(on)el.classList.add(cls||'live')}
+function render(){
+  var lit=(s1===s2);
+  $('lv1').parentNode.setAttribute('transform','translate(220 210) rotate('+(s1===1?-ANG:ANG)+')');
+  $('lv2').parentNode.setAttribute('transform','translate(680 210) rotate('+(s2===1?ANG:-ANG)+')');
+  setLive('w_src',true); setLive('lv1',true);
+  setLive('w_t1',s1===1); setLive('w_t2',s1===2);
+  setLive('lv2',lit); setLive('w_c2',lit); setLive('w_n',lit,'liveN');
+  ['t_c1','t_11','t_12','t_c2','t_21','t_22'].forEach(function(id){$(id).classList.remove('live')});
+  $('t_c1').classList.add('live'); $('t_1'+s1).classList.add('live');
+  if(lit){$('t_2'+s2).classList.add('live');$('t_c2').classList.add('live')}
+  $('lamp').classList.toggle('on',lit);
+  $('p1').textContent=s1; $('p2').textContent=s2;
+  $('status').classList.toggle('on',lit);
+  $('stText').textContent=lit?'Đèn SÁNG':'Đèn TẮT';
+  $('why').textContent=lit
+    ?'Hai công tắc cùng nối vào một dây hành trình nên dòng điện đi qua được tới đèn.'
+    :'Hai công tắc nối vào hai dây hành trình khác nhau nên mạch bị hở, đèn tắt.';
+  [].forEach.call(document.querySelectorAll('tr[data-k]'),function(r){r.classList.toggle('cur',r.dataset.k===''+s1+s2)});
+}
+function flip(k){ if(k===1)s1=3-s1; else s2=3-s2; render(); }
+$('b1').onclick=function(){flip(1)}; $('b2').onclick=function(){flip(2)};
+['sw1','sw2'].forEach(function(id,i){
+  var g=$(id); g.onclick=function(){flip(i+1)};
+  g.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();flip(i+1)}};
+});
+render();
+
+/* khởi động: mở đúng slide theo #số trên địa chỉ */
+go((parseInt(location.hash.slice(1),10)||1)-1);
+</script>
+</body>
+</html>
 
